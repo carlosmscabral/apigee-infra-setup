@@ -108,4 +108,4 @@ apigeecli envgroups update -n dev-envgroup  -o $PROJECT_ID -t=$(gcloud auth prin
 # Sample call
 # This call is presenting the client cert/key and using the server-ca to validate the certificate presented by the
 # TLS server (envoy). Envoy, on the other hand, is using the customer CA to validate the cert/key presented by the client.
-curl -vvv --cert example-client.crt --key example-client.key --cacert server-ca.crt https://mtls.35.199.67.154.nip.io/hello-world
+curl -vvv --cert example-client.crt --key example-client.key --cacert server-ca.crt "https://mtls.${LB_EXTERNAL_ADDRESS}.nip.io/hello-world"

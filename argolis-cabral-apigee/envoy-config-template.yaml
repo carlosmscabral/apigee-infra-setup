@@ -25,8 +25,11 @@ static_resources:
               typed_config:
                 "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
                 stat_prefix: ingress_http
+                forward_client_cert_details: APPEND_FORWARD
                 set_current_client_cert_details:
                   subject: true
+                  cert: true
+                  uri: true
                 http_filters:
                   - name: envoy.filters.http.router
                 route_config:
@@ -41,9 +44,25 @@ static_resources:
                             cluster: apigee_instance_1
                       request_headers_to_add:
                       - header:
-                          key: "x-apigee-tls-client-raw-cert"
+                          key: "x-client-cert"
                           value: "%DOWNSTREAM_PEER_CERT%"
-                append: true
+                        append: true
+                      - header:
+                          key: "x-client-sha256-fingerprint"
+                          value: "%DOWNSTREAM_PEER_FINGERPRINT_256%"
+                        append: true
+                      - header:
+                          key: "x-client-issuer"
+                          value: "%DOWNSTREAM_PEER_ISSUER%"
+                        append: true
+                      - header:
+                          key: "x-client-subj"
+                          value: "%DOWNSTREAM_PEER_SUBJECT%"
+                        append: true
+                      - header:
+                          key: "x-client-san"
+                          value: "%DOWNSTREAM_PEER_URI_SAN%"
+                        append: true
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
