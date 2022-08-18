@@ -1,6 +1,11 @@
 #!/bin/bash
 
 # Assumes the project exists, and has a VPC created, with a single subnet.
+# Also assumes that the tool apigeecli (https://github.com/apigee/apigeecli) installed
+# and available in your path.
+# Finally, remember to lift all necessary Org Policies restrictions if in Argolis before proceeding.
+# Feel free to update the variables at the beggining of the script with your own project/region and...
+# fire it up!
 
 AUTH="Authorization: Bearer $(gcloud auth print-access-token)"
 PROJECT_ID="cabral-apigee"
