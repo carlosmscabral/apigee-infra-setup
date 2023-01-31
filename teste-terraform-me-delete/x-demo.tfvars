@@ -27,7 +27,7 @@ apigee_instances = {
 
 apigee_environments = {
   prd = {
-    display_name = "Prod Legal"
+    display_name = "Prod Environment"
     description  = "Environment created by apigee/terraform-modules"
     node_config  = null
     iam          = null
@@ -37,17 +37,17 @@ apigee_environments = {
 
 apigee_envgroups = {
   prod-envgroup = {
-    hostnames = ["change-me-later.com"]
+    hostnames = [""]
   }
 }
 
-network = "apigee-network"
+network = "my-network"
 
-psc_ingress_network = "apigee-network"
+psc_ingress_network = "my-network"
 
 psc_ingress_subnets = [
   {
-    name               = "apigee-psc-subnet"
+    name               = "psc-subnet"
     ip_cidr_range      = "10.100.0.0/24"
     region             = "southamerica-east1"
     secondary_ip_range = null

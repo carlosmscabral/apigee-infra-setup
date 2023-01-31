@@ -38,6 +38,7 @@ module "vpc" {
   source     = "github.com/terraform-google-modules/cloud-foundation-fabric//modules/net-vpc?ref=v16.0.0"
   project_id = module.project.project_id
   name       = var.network
+  # used for peering with service networking
   psa_config = {
     ranges = {
       apigee-range         = var.peering_range
@@ -45,17 +46,26 @@ module "vpc" {
     }
     routes = null
   }
+  # used for picking an IP Address for PSC NEG
+  subnets = [
+    {
+      ip_cidr_range = var.psc_ingress_subnets[0].ip_cidr_range
+      name = var.psc_ingress_subnets[0].name
+      region = var.psc_ingress_subnets[0].region
+      secondary_ip_range = null
+    }
+  ]
 }
 
 module "nip-development-hostname" {
-  source             = "../../terraform-modules/modules/nip-development-hostname"
+  source             = "github.com/apigee/terraform-modules/modules/nip-development-hostname"
   project_id         = module.project.project_id
   address_name       = "apigee-external"
   subdomain_prefixes = [for name, _ in var.apigee_envgroups : name]
 }
 
 module "apigee-x-core" {
-  source              = "../../terraform-modules/modules/apigee-x-core"
+  source              = "github.com/apigee/terraform-modules/modules/apigee-x-core"
   project_id          = module.project.project_id
   ax_region           = var.ax_region
   apigee_environments = var.apigee_environments
@@ -69,33 +79,13 @@ module "apigee-x-core" {
   billing_type     = "PAYG"
 }
 
-# module "psc-ingress-vpc" {
-#   source                  = "github.com/terraform-google-modules/cloud-foundation-fabric//modules/net-vpc?ref=v16.0.0"
-#   project_id              = module.project.project_id
-#   name                    = var.psc_ingress_network
-#   auto_create_subnetworks = false
-#   subnets                 = var.psc_ingress_subnets
-# }
-
-resource "google_compute_subnetwork" "psc_subnet" {
-  name = var.psc_ingress_subnets[0].name
-  ip_cidr_range = var.psc_ingress_subnets[0].ip_cidr_range
-  region = var.psc_ingress_subnets[0].region
-  network = var.psc_ingress_network
-  project = var.project_id
-}
-
-# output "psc_subnet_self_link" {
-#   value = google_compute_subnetwork.psc_subnet.
-# }
-
 resource "google_compute_region_network_endpoint_group" "psc_neg" {
   project               = var.project_id
   for_each              = var.apigee_instances
   name                  = "psc-neg-${each.value.region}"
   region                = each.value.region
   network               = module.vpc.network.id
-  subnetwork            = google_compute_subnetwork.psc_subnet.self_link
+  subnetwork            = module.vpc.subnet_self_links[local.psc_subnet_region_name[each.value.region]]
   network_endpoint_type = "PRIVATE_SERVICE_CONNECT"
   psc_target_service    = module.apigee-x-core.instance_service_attachments[each.value.region]
   lifecycle {
@@ -104,7 +94,7 @@ resource "google_compute_region_network_endpoint_group" "psc_neg" {
 }
 
 module "nb-psc-l7xlb" {
-  source                  = "../../terraform-modules/modules/nb-psc-l7xlb"
+  source                  = "github.com/apigee/terraform-modules/modules/nb-psc-l7xlb"
   project_id              = module.project.project_id
   name                    = "apigee-xlb-psc"
   network                 = module.vpc.network.id
